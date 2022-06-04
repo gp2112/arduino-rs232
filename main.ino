@@ -95,5 +95,18 @@ void setup(){
 
 // O loop() eh executado continuamente (como um while(true))
 void loop ( ) {
-  //>>>> Codigo Aqui <<<<
+  	if (Serial.avaliable()>0) {
+  		c = Serial.read();
+        
+        waitCTS(0);
+
+        sig_rts = 1;
+        sendRTS();
+        waitCTS(1);
+
+        sendData(c);
+
+        sig_rts = 0;
+        sendRTS();
+  	}
 }
