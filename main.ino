@@ -6,14 +6,12 @@
 #define BAUD_RATE 1
 #define HALF_BAUD 1000/(2*BAUD_RATE)
 
+#define START 1
+#define END 0
 
 // PAR -> 0 | IMPAR -> 1
 #define PARITY 0 
 
-#define DEBUG 1
-#define dprint(str) {
-    if (DEBUG) Serial.println(str);
-}
 
 #include "Temporizador.h"
 
@@ -68,12 +66,18 @@ void readCTS() {
     sig_cts = digitalRead(PINO_CTS)==HIGH;
 }
 
-void waitCTS() {
-    while (!sig_cts) readCTS();
+void waitCTS(boolean sig) {
+    while (!sig) readCTS();
 }
 
 void sendRTS() {
     transmitBit(PINO_RTS, sig_rts);
+}
+
+void handshake(bool state) {
+    sig_rts = state;
+    sendRTS();
+    waitCTS(state);
 }
 
 // Executada uma vez quando o Arduino reseta
@@ -98,15 +102,10 @@ void loop ( ) {
   	if (Serial.avaliable()>0) {
   		c = Serial.read();
         
-        waitCTS(0);
-
-        sig_rts = 1;
-        sendRTS();
-        waitCTS(1);
+        handshake(START);
 
         sendData(c);
 
-        sig_rts = 0;
-        sendRTS();
+        handshake(END);
   	}
 }
