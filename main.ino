@@ -10,38 +10,57 @@
 // PAR -> 0 | IMPAR -> 1
 #define PARITY 0 
 
+#define DEBUG 1
+#define dprint(str) {
+    if (DEBUG) Serial.println(str);
+}
+
 #include "Temporizador.h"
 
-char clock = 0,
+
+boolean clock = 0,
+     clk_change = 0;
      sig_rts = 0,
      sig_cts = 0;
 
 
-// Rotina de interrupcao do timer1
-// O que fazer toda vez que 1s passou?
-ISR(TIMER1_COMPA_vect){
-  //>>>> Codigo Aqui <<<<
-}
-
-void transmitBit(char b) {
-    digitalWrite(PINO_TX, b ? HIGH : LOW);
+void transmitBit(int pin, boolean b) {
+    digitalWrite(pin, b ? HIGH : LOW);
 }
 
 void transmitCLK() {
-    digitalWrite(PINO_CLK, clock ? HIGH : LOW);
+    transmitBit(PINO_CLK, b);
     clock = !clock;
+    clk_change = 1;
 }
 
+ISR(TIMER1_COMPA_vect) {
+    transmitCLK();
+}
+
+// Waits for clock's signal changes to 0
+void waitClock() {
+    while (clock || !clock && !clk_change);
+    clk_change = 0;
+}
+
+// serial byte transmition and parity bit at the end
+// Data sent: emissor --> Bp-b7-b6-b5-b4-b3-b2-b1-b0  --> receptor
 void sendData(char data) {
-    int n=0, ones=0;
-    int div = data;
-    while (div>0 || n < 8) {
-        transmitBit(div%2);
-        ones += div%2;
+    int n=0, div=data; 
+    boolean parity=0;
+    
+    while (n < 8) {
+        waitClock();
+        transmitBit(PINO_TX, div%2);
+        ones ^= div%2;
         div = div >> 1;
         n++;
     }
-    transmitBit(ones%2==PARITY);
+
+    // transmit parity bit
+    waitClock();
+    transmitBit(PINO_TX, parity!=PARITY);
 
 }
 
@@ -49,8 +68,12 @@ void readCTS() {
     sig_cts = digitalRead(PINO_CTS)==HIGH;
 }
 
+void waitCTS() {
+    while (!sig_cts) readCTS();
+}
+
 void sendRTS() {
-    digitalWrite(PINO_RTS, sig_rts ? HIGH : LOW);
+    transmitBit(PINO_RTS, sig_rts);
 }
 
 // Executada uma vez quando o Arduino reseta
