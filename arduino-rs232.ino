@@ -12,6 +12,7 @@
 // PAR -> 0 | IMPAR -> 1
 #define PARITY 0 
 
+#include "Temporizador.h"
 
 boolean clock = 0,
      clk_change = 0,
@@ -22,6 +23,7 @@ char c;
 
 void transmitBit(int pin, boolean b) {
     digitalWrite(pin, b ? HIGH : LOW);
+    Serial.print(b);
 }
 
 void transmitCLK() {
@@ -36,9 +38,7 @@ ISR(TIMER1_COMPA_vect) {
 
 // Waits for clock's signal changes to 0
 void waitClock() {
-  	Serial.print("\ncomecou a espera");
-    while (clock || (!clock && !clk_change));
-  	Serial.print("\nacabou a espera");
+    while (clock);
     clk_change = 0;
 }
 
@@ -48,20 +48,21 @@ void sendData(char data) {
     int n=0, div=data; 
     boolean parity=0;
     
+    Serial.println("Transmit: ");
     while (n < 8) {
-      	Serial.print("oi");
         waitClock();
         transmitBit(PINO_TX, div%2);
         parity ^= div%2;
         div = div >> 1;
         n++;
     }
+    Serial.print("\n");
 
     // transmit parity bit
     waitClock();
-    transmitBit(PINO_TX, parity!=PARITY);
-
-  	Serial.println("");
+    Serial.println("Paridade: ");
+    transmitBit(PINO_TX, parity==PARITY);
+    Serial.print("\n");
 }
 
 void readCTS() {
@@ -104,7 +105,7 @@ void loop ( ) {
   	if (Serial.available()>0) {
       	iniciaTemporizador();
   		c = Serial.read();
-        Serial.println(c); 
+        //Serial.println(c); 
         handshake(START);
 
         sendData(c);
