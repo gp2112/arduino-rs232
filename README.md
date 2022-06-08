@@ -15,16 +15,17 @@ If you prefer to use some other IDE or Text Editor, you have this power too!
 ```bash
 usermod -aG uucp YOUR-USER
 ```
-    1. Restart or logout/login your system
+- Restart or logout/login your system
 
 2. Check if *cdc_acm* module is already activated in your system:
+
 ```bash
 lsmod | grep cdc_acm
 ```
-    1. If nothing is returned, than you need to activate it (you may need sudo):
-    ```bash
-        modprobe cdc_acm
-    ```
+- If nothing is returned, than you need to activate it (you may need sudo):
+```bash
+modprobe cdc_acm
+```
 
 3. Install [arduino-cli](https://arduino.github.io/arduino-cli/0.19/)
 4. Create the configuration file:
