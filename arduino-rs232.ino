@@ -17,7 +17,7 @@
 
 
 boolean clock = 0,
-     clk_change = 0;
+     clk_change = 0,
      sig_rts = 0,
      sig_cts = 0;
 
@@ -27,7 +27,7 @@ void transmitBit(int pin, boolean b) {
 }
 
 void transmitCLK() {
-    transmitBit(PINO_CLK, b);
+    transmitBit(PINO_CLK, clock);
     clock = !clock;
     clk_change = 1;
 }
@@ -51,7 +51,7 @@ void sendData(char data) {
     while (n < 8) {
         waitClock();
         transmitBit(PINO_TX, div%2);
-        ones ^= div%2;
+        parity ^= div%2;
         div = div >> 1;
         n++;
     }
@@ -99,9 +99,10 @@ void setup(){
 
 // O loop() eh executado continuamente (como um while(true))
 void loop ( ) {
-  	if (Serial.avaliable()>0) {
+    char c;
+  	if (Serial.available()>0) {
   		c = Serial.read();
-        
+        Serial.println(c); 
         handshake(START);
 
         sendData(c);
