@@ -40,6 +40,8 @@ arduino-cli core install arduino:avr
 
 6. Now you can compile and upload to your board using the *Makefile*.
 
+- OBS: You must `make configure` every time you plug your rduino in.
+
 7. To get arduino's output just execute `./listen` and to send an input, `./send YOUR-INPUT`
 
 
