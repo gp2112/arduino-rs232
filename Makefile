@@ -10,3 +10,6 @@ compile:
 
 upload: compile
 	arduino-cli upload --fqbn "$(FQBN)" -p $(PORT)
+
+configure:
+	stty -F $(PORT) cs8 9600 ignbrk -brkint -imaxbel -opost -onlcr -isig -icanon -iexten -echo -echoe -echok -echoctl -echoke noflsh -ixon -crtscts
