@@ -52,7 +52,6 @@ void sendData(char data) {
       	Serial.print("oi");
         waitClock();
         transmitBit(PINO_TX, div%2);
-  		Serial.print(div%2);
         parity ^= div%2;
         div = div >> 1;
         n++;
@@ -105,7 +104,7 @@ void loop ( ) {
   	if (Serial.available()>0) {
       	iniciaTemporizador();
   		c = Serial.read();
-        
+        Serial.println(c); 
         handshake(START);
 
         sendData(c);
