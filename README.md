@@ -14,18 +14,17 @@ This code was made for Arduino UNO. For other Arduinos versions, you may have to
 
 ## Compiling and Upload
 
-
 If you use Arduino's IDE, you can just open the project on it aaand run!
 
 If you prefer to use some other IDE or Text Editor, you have this power too!
 
-### Without Arduino's IDE on Linux
+## If your system is not recognizing Arduino (Linux):
 
 1. Add your user to UUCP group (you may use sudo for this)
 ```bash
 usermod -aG uucp YOUR-USER
 ```
-- Restart or logout/login your system
+- Restart your system
 
 2. Check if *cdc_acm* module is already activated in your system:
 
@@ -41,24 +40,29 @@ modprobe cdc_acm
 ```
 echo "cdc_acm" > /etc/modules-load.d/cdc_acm.conf
 ```
-3. Install [arduino-cli](https://arduino.github.io/arduino-cli/0.19/)
-4. Create the configuration file:
+
+## If you don't want to use Arduino's IDE (Linux):
+
+yea, I don't like it too...
+
+1. Install [arduino-cli](https://arduino.github.io/arduino-cli/0.19/)
+2. Create the configuration file:
 ```bash
 arduino-cli config init
 ```
-5. Install your arduino core drivers. This code was made for Arduino UNO, so:
+3. Install your arduino core drivers. This code was made for Arduino UNO, so:
 ```bash
 arduino-cli core update-index
 arduino-cli core install arduino:avr
 ```
 
-6. Now you can compile and upload to your board using the *Makefile*.
+4. Now you can compile and upload to your board using the *Makefile*.
 
 - OBS: You must `make configure` every time you plug your rduino in.
 
-7. To get arduino's output just execute `./listen` and to send an input, `./send YOUR-INPUT`
+5. To get arduino's output just execute `./listen` and to send an input, `./send YOUR-INPUT`
 
-## Protocolo Specification
+## Protocol Specification
 
 This protocol specifies the transmission for each byte and it bit parity
 
