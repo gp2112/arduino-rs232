@@ -1,6 +1,6 @@
-# arduino-rs232
+# Serial Communication in Arduino ~ RS-232
 
-This is a simple implementation of a serial comunication protocol, based on [RS-232](https://pt.wikipedia.org/wiki/RS-232), on Arduino, for Computer Networks subject.
+This is a simple implementation of a serial comunication protocol, based on [RS-232](https://pt.wikipedia.org/wiki/RS-232), on Arduino, for Computer Networks class.
 
 ### Group Members
 
