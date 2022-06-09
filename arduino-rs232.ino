@@ -18,9 +18,6 @@ boolean clk = 0,
         sig_rts = 0,
         sig_cts = 0;
 
-void transmitBit(int pin, boolean b) {
-    digitalWrite(pin, b ? HIGH : LOW);
-}
 
 void waitClk() {
     while(clk);
@@ -35,7 +32,6 @@ void sendData(char data) {
     
     Serial.println("Transmit: ");
     while (n < 8) {
-        waitClk();
 
         transmitBit(PINO_TX, div%2);
         parity ^= div%2;
@@ -50,6 +46,10 @@ void sendData(char data) {
     transmitBit(PINO_TX, parity!=PARITY);
     Serial.print(parity);
     Serial.print("\n");
+}
+void transmitBit(int pin, boolean b) {
+    waitClk();
+    digitalWrite(pin, b ? HIGH : LOW);
 }
 
 ISR(TIMER1_COMPA_vect) {
