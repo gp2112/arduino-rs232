@@ -1,9 +1,19 @@
 # arduino-rs232
 
+This is a simple implementation of a serial comunication protocol, based on [RS-232](https://pt.wikipedia.org/wiki/RS-232), on Arduino, for Computer Networks subject.
 
-This is a simple implementation of a serial comunication protocol, based on RS-232, on Arduino, for Computer Networks subject.
+### Group Members
+
+- [Guilherme Ramos Costa Paixão](https://guip.dev) - 11796079
+- [Adrio Oliveira Alves](https://github.com/adriooa) - 11796830
+- [Eduardo Vinicius Barbosa Rossi](https://github.com/RossiEduardo) - 10716887
+
+### Compatibility
+
+This code was made for Arduino UNO. For other Arduinos versions, you may have to change it's registers.
 
 ### Compiling and Upload
+
 
 If you use Arduino's IDE, you can just open the project on it aaand run!
 
