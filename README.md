@@ -36,7 +36,11 @@ lsmod | grep cdc_acm
 ```bash
 modprobe cdc_acm
 ```
-
+- If you wish to load this module automaticaly each time your system boots, if your're using *systemd*:
+(you may use *sudo*)
+```
+echo "cdc_acm" > /etc/modules-load.d/cdc_acm.conf
+```
 3. Install [arduino-cli](https://arduino.github.io/arduino-cli/0.19/)
 4. Create the configuration file:
 ```bash
