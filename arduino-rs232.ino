@@ -2,7 +2,6 @@
 #define PINO_TX 13 // Pin de transmissão
 #define PINO_CTS 12
 #define PINO_RTS 11
-#define PINO_CLK 10
 #define BAUD_RATE 1
 #define HALF_BAUD 1000/(2*BAUD_RATE)
 
@@ -14,29 +13,18 @@
 
 #include "Temporizador.h"
 
-boolean clock = 0,
-     clk_change = 0,
-     sig_rts = 0,
-     sig_cts = 0;
+boolean clk = 0,
+        clk_change = 0,
+        sig_rts = 0,
+        sig_cts = 0;
 
 void transmitBit(int pin, boolean b) {
     digitalWrite(pin, b ? HIGH : LOW);
 }
 
-void transmitCLK() {
-    transmitBit(PINO_CLK, clock);
-    clock = !clock;
-    clk_change = 1;
-}
-
-ISR(TIMER1_COMPA_vect) {
-   transmitCLK(); 
-}
-
-// Waits for clock's signal changes to 0
-void waitClock() {
-    while (clock);
-    clk_change = 0;
+void waitClk() {
+    while(clk);
+    clk = 1;
 }
 
 // serial byte transmition and parity bit at the end
@@ -45,26 +33,27 @@ void sendData(char data) {
     int n=0, div=data; 
     boolean parity=0;
     
-    
     Serial.println("Transmit: ");
     while (n < 8) {
-        waitClock();
-        //delay(500);
-        Serial.print("RTS: ");
-        Serial.println(sig_rts);
+        waitClk();
+
         transmitBit(PINO_TX, div%2);
         parity ^= div%2;
-        div = div >> 1;
+        div >>= 1;
+
         n++;
     }
     Serial.print("\n");
 
     // transmit parity bit
-    waitClock();
     Serial.println("Paridade: ");
     transmitBit(PINO_TX, parity!=PARITY);
     Serial.print(parity);
     Serial.print("\n");
+}
+
+ISR(TIMER1_COMPA_vect) {
+    clk = 0;
 }
 
 void readCTS() {
@@ -96,30 +85,37 @@ void setup(){
     pinMode(PINO_TX, OUTPUT);
     pinMode(PINO_RTS, OUTPUT);
     pinMode(PINO_CTS, INPUT);
-    pinMode(PINO_CLK, OUTPUT);
     // Configura timer
     configuraTemporizador(BAUD_RATE);
     // habilita interrupcoes
     interrupts();
 }
 
-// O loop() eh executado continuamente (como um while(true))
-void loop ( ) {
+void sendString() {
     char c;
-  	while (Serial.available()>0) {
+
+    iniciaTemporizador();
+
+    handshake(START);
+
+    while (Serial.available()>0) {
         c = Serial.read();
         if (c == '\n')
             continue;
 
         Serial.println(c);
-      	iniciaTemporizador();
-
-        handshake(START);
-
+      	
         sendData(c);
+    }
 
-        handshake(END);
-      	paraTemporizador();
-        delay(0.3*HALF_BAUD);
-  	}
+    handshake(END);
+    paraTemporizador();
+}
+
+// O loop() eh executado continuamente (como um while(true))
+void loop ( ) {
+    if (Serial.available() > 0) {
+        sendString();
+        Serial.println("Sent!");    
+    }
 }
