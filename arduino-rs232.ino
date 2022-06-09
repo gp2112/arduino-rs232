@@ -1,7 +1,7 @@
 
 #define PINO_TX 13 // Pin de transmissão
-#define PINO_CTS 12
-#define PINO_RTS 11
+#define PINO_RTS 12
+#define PINO_CTS 11
 #define BAUD_RATE 1
 #define HALF_BAUD 1000/(2*BAUD_RATE)
 
@@ -16,52 +16,69 @@
 boolean clk = 0,
         clk_change = 0,
         sig_rts = 0,
-        sig_cts = 0;
+        sig_cts = 0,
+        parity = 0,
+        is_on = 0;
 
+int n = 0;
+
+char c;
 
 void waitClk() {
-    while(clk);
-    clk = 1;
+    while(!clk);
+    clk = 0;
 }
 
-// serial byte transmition and parity bit at the end
-// Data sent: emissor --> Bp-b7-b6-b5-b4-b3-b2-b1-b0  --> receptor
-void sendData(char data) {
-    int n=0, div=data; 
-    boolean parity=0;
-    
-    Serial.println("Transmit: ");
-    while (n < 8) {
 
-        transmitBit(PINO_TX, div%2);
-        parity ^= div%2;
-        div >>= 1;
-
-        n++;
-    }
-    Serial.print("\n");
-
-    // transmit parity bit
-    Serial.println("Paridade: ");
-    transmitBit(PINO_TX, parity!=PARITY);
-    Serial.print(parity);
-    Serial.print("\n");
-}
 void transmitBit(int pin, boolean b) {
-    waitClk();
     digitalWrite(pin, b ? HIGH : LOW);
 }
 
 ISR(TIMER1_COMPA_vect) {
-    clk = 0;
+    is_on = sig_rts && sig_cts;
+    if (is_on) {
+
+        
+
+        if (n++ == 0) {
+            Serial.print(c%2);
+            transmitBit(PINO_TX, 0);
+        }
+
+        // dado
+        else if (n++ <= 8) {
+            Serial.print(c%2);
+            parity ^= c%2;
+            transmitBit(PINO_TX, c%2);
+            c >>= 1;
+        }
+        else {
+            Serial.print(parity);
+            transmitBit(PINO_TX, parity);
+            transmitBit(PINO_TX, 1);
+            transmitBit(PINO_TX, 1);
+
+
+            Serial.println(11);
+            handshake(END);
+            paraTemporizador();
+            n = 0;
+
+        }
+        
+
+    }
 }
 
 void readCTS() {
     sig_cts = digitalRead(PINO_CTS)==HIGH;
+    //sig_cts = 0;
 }
 
 void waitCTS(boolean sig) {
     while (sig_cts!=sig) readCTS();
+    Serial.print("Sig CTS");
+    Serial.println(sig_cts);
 }
 
 void sendRTS() {
@@ -71,8 +88,10 @@ void sendRTS() {
 void handshake(bool state) {
     sig_rts = state;
     sendRTS();
+    Serial.println("Waiting CTS");
     waitCTS(state);
-    Serial.println("received CTS");
+    if (state) Serial.println("received CTS");
+    else Serial.println("Closed Connection");
 }
 
 // Executada uma vez quando o Arduino reseta
@@ -91,31 +110,24 @@ void setup(){
     interrupts();
 }
 
-void sendString() {
-    char c;
-
-    iniciaTemporizador();
-
-    handshake(START);
-
-    while (Serial.available()>0) {
-        c = Serial.read();
-        if (c == '\n')
-            continue;
-
-        Serial.println(c);
-      	
-        sendData(c);
-    }
-
-    handshake(END);
-    paraTemporizador();
-}
 
 // O loop() eh executado continuamente (como um while(true))
 void loop ( ) {
-    if (Serial.available() > 0) {
-        sendString();
-        Serial.println("Sent!");    
+    char tmp;
+    while (Serial.available()>0) {
+        tmp = Serial.read();
+
+        if (tmp == '\n')
+            continue;
+
+        c = tmp;
+
+        iniciaTemporizador();
+
+        handshake(START);
+        
+        Serial.println(c);
+        Serial.println("Sent!");
     }
+   
 }
