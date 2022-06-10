@@ -2,7 +2,7 @@
 #define PINO_TX 13 // Pin de transmissão
 #define PINO_RTS 12
 #define PINO_CTS 11
-#define BAUD_RATE 1
+#define BAUD_RATE 2
 #define HALF_BAUD 1000/(2*BAUD_RATE)
 
 #define START 1
@@ -13,16 +13,17 @@
 
 #include "Temporizador.h"
 
-boolean clk = 0,
+volatile boolean clk = 0,
         clk_change = 0,
         sig_rts = 0,
         sig_cts = 0,
         parity = 0,
-        is_on = 0;
+        is_on = 0,
+        sent = 0;
 
-int n = 0;
+volatile int n = 0;
 
-char c;
+volatile char c;
 
 void waitClk() {
     while(!clk);
@@ -39,34 +40,32 @@ ISR(TIMER1_COMPA_vect) {
     if (is_on) {
 
         
-
-        if (n++ == 0) {
-            Serial.print(c%2);
-            transmitBit(PINO_TX, 0);
-        }
-
         // dado
-        else if (n++ <= 8) {
+        if (n >= 0 && n <= 7) {
             Serial.print(c%2);
             parity ^= c%2;
             transmitBit(PINO_TX, c%2);
             c >>= 1;
         }
-        else {
+        else if (n == 8) {
             Serial.print(parity);
             transmitBit(PINO_TX, parity);
-            transmitBit(PINO_TX, 1);
-            transmitBit(PINO_TX, 1);
 
+        }
+        else if (n == 9) {
+            transmitBit(PINO_TX, 1);
+            Serial.print(1);
 
-            Serial.println(11);
+        }
+        else if (n == 10) {
+            transmitBit(PINO_TX, 1);
+            Serial.println(1);
             handshake(END);
             paraTemporizador();
             n = 0;
-
+            sent = 1;
         }
-        
-
+        n++;
     }
 }
 
@@ -115,19 +114,27 @@ void setup(){
 void loop ( ) {
     char tmp;
     while (Serial.available()>0) {
+        sent = 0;
         tmp = Serial.read();
 
-        if (tmp == '\n')
-            continue;
-
+        //if (tmp == '\n')
+        //    continue;
+        
         c = tmp;
 
-        iniciaTemporizador();
 
         handshake(START);
         
+        iniciaTemporizador();
+                
+        Serial.print(0);
+        transmitBit(PINO_TX, 0);
+        
+
+
         Serial.println(c);
         Serial.println("Sent!");
+        while (!sent);
     }
    
 }
